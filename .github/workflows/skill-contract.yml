@@ -1,0 +1,27 @@
+name: Skill Contract
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify runtime-first skill contract
+        run: python3 skills/ios-native-design/tests/test_skill_contract.py
+
+      - name: Compile static verifier
+        run: python3 -m py_compile skills/ios-native-design/verifier/ios_design_verifier.py
