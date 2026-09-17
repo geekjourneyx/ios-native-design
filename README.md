@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="ios-native-design — an Apple-native design harness for SwiftUI coding agents">
+  <img src="./assets/readme/hero.svg" width="100%" alt="ios-native-design — an Apple-native runtime design harness for SwiftUI coding agents">
 </p>
 
 <p align="center">
@@ -7,10 +7,10 @@
 </p>
 
 <p align="center">
-  <strong>Stop asking coding agents to “make it look more Apple”. Give them constraints they can verify.</strong>
+  <strong>Stop asking coding agents to “make it look more Apple”. Make them operate the app and prove it.</strong>
 </p>
 
-`ios-native-design` is a reusable design-engineering Skill for building and reviewing SwiftUI apps. It turns Apple HIG, native component choices, semantic tokens, accessibility, screenshot review, and UI regression checks into one repeatable agent workflow.
+`ios-native-design` is a reusable iOS design-engineering Skill for AI coding agents. It turns Apple HIG, native component choices, semantic tokens, accessibility, **agent-operated runtime testing**, Device Hub screenshots, and deterministic UI regression into one repeatable workflow.
 
 ## Install
 
@@ -18,82 +18,134 @@
 npx skills add geekjourneyx/ios-native-design
 ```
 
-The repo contains one Skill, so that is the shortest path. To select it explicitly:
+Explicit selection:
 
 ```bash
 npx skills add geekjourneyx/ios-native-design --skill ios-native-design
 ```
 
-Install globally when you want it available across projects:
+Global install:
 
 ```bash
 npx skills add geekjourneyx/ios-native-design -g
 ```
 
-## Why this exists
+## The key idea
 
-AI coding agents can produce SwiftUI that compiles while still feeling visually inconsistent or un-iOS-like:
+A SwiftUI screen is not finished because it compiles. It is not finished because Preview looks good. It is not even finished because an agent looked at one screenshot.
 
-- every screen invents new spacing and corner radii
-- fixed font sizes replace Dynamic Type
-- HEX colors replace semantic system colors
-- custom tab bars and toggles recreate native controls
-- every section becomes a rounded card
-- Liquid Glass becomes decoration instead of a functional layer
-- UI is considered “done” before anyone looks at the rendered result
-
-The answer is not a longer style prompt. It is a **Design Harness**.
+The highest-value verifier is the **running app**.
 
 ```text
-Product requirement
-        ↓
-Apple HIG + native component decision
-        ↓
-Semantic design tokens
-        ↓
+Requirement
+    ↓
+HIG + native components + tokens
+    ↓
 SwiftUI implementation
-        ↓
-Preview / simulator render
-        ↓
-Screenshot review
-        ↓
-Accessibility + interaction checks
-        ↓
-Static verifier + XCUI + snapshots
-        ↓
-Design Definition of Done
+    ↓
+Build + launch
+    ↓
+Agent operates the app
+tap · swipe · scroll · type
+    ↓
+Device Hub evidence
+screenshot · accessibility semantics · environment
+    ↓
+Visual + behavioral review
+    ↓
+Fix and rerun
+    ↓
+Stable critical path
+    ↓
+XCUI regression
 ```
 
-## Four kinds of design rules
+With Xcode 27, this is increasingly a native agent workflow: agents can drive a running app, while Device Hub unifies simulated and physical devices and can capture full-resolution device screenshots.
 
-A core idea of this Skill is to avoid pretending every design decision can be linted.
+## Verification priority
 
-| Rule class | What it catches | Example |
+| Priority | Layer | Purpose |
 |---|---|---|
-| **STATIC** | Source-level drift | fixed font size, raw color, magic padding |
-| **RENDER** | Problems visible only after rendering | weak hierarchy, card overload, broken Dark Mode |
-| **INTERACTION** | Runtime and accessibility behavior | 44×44 hit target, VoiceOver, Reduce Motion |
-| **JUDGMENT** | Product/design decisions | familiarity, simplicity, brand restraint, delight |
+| **P0** | Agent runtime exploration | Prove the actual task works in the rendered app |
+| **P0** | Device Hub + accessibility evidence | See what the user sees and what assistive tech sees |
+| **P1** | XCUI + physical-device smoke | Turn stable flows into repeatable regression |
+| **P1** | Preview matrix | Fast component/state iteration |
+| **P2** | Static verifier + snapshots | Prevent design-system drift |
 
-Static rules should be automated. Visual judgment should be based on screenshots, not regexes.
+This is intentionally different from a static style guide.
 
-## Native first
+> Static lint can tell you `.padding(17)` exists. It cannot tell you whether the screen is actually good.
 
-The default rule is simple:
+## Runtime capability routing
 
-> If SwiftUI already provides the platform behavior, use the native component unless the product has a concrete reason not to.
+Use the highest-level reliable runtime interface available:
 
-That means preferring `NavigationStack`, `TabView`, `Toggle`, `Picker`, `.searchable`, `.sheet`, `.alert`, `Menu`, `ProgressView`, `DatePicker`, `Button`, and SF Symbols before rebuilding equivalents from stacks, capsules, offsets, and gestures.
+```text
+Xcode native agent tools?
+  → use them
 
-The goal is not “generic Apple UI”. Agent freedom should be **low** in navigation, controls, accessibility, and platform behavior — and **high** in content, illustration, data visualization, editorial composition, and deliberate brand moments.
+Semantic iOS simulator automation?
+  → use it
+
+Computer Use?
+  → drive Xcode + Device Hub
+
+No runtime automation?
+  → CLI + Preview + manual screenshots
+```
+
+The rule is simple:
+
+> **CLI/semantic tools for deterministic work. Computer Use for visual and GUI-only work.**
+
+Avoid raw coordinate clicking when a semantic target exists.
+
+## Device Hub as visual evidence
+
+For final visual review, prefer Device Hub's own Screenshot control over a screenshot of the Mac desktop.
+
+Apple documents that Device Hub captures at the **full resolution of the simulated or physical device regardless of Mac display resolution** and saves the image to the Mac Desktop.
+
+That creates a very efficient loop:
+
+```text
+Agent navigates app
+    ↓
+Device Hub Screenshot
+    ↓
+Agent reads full-resolution file
+    ↓
+compare / critique
+    ↓
+fix
+    ↓
+repeat
+```
+
+Use desktop/Computer Use screenshots for navigation context. Use Device Hub captures as final visual evidence when available.
+
+## Explore → codify
+
+Do not make an LLM rediscover a stable critical path forever.
+
+```text
+Agent exploration
+  → discovers bug / reliable path
+  → fixes and reruns
+  → stable flow
+  → XCUI test
+  → deterministic CI
+```
+
+This keeps agent testing high-value: agents search for unknown problems; deterministic tests guard known behavior.
 
 ## What is inside
 
 ```text
 skills/ios-native-design/
-├── SKILL.md                 # agent workflow + hard constraints
-├── DESIGN_DOD.md            # final design Definition of Done
-├── VERIFIER_RULES.md        # STATIC / RENDER / INTERACTION / JUDGMENT rules
+├── SKILL.md
+├── DESIGN_DOD.md
+├── VERIFIER_RULES.md
 ├── references/
 │   ├── apple-hig-baseline.md
 │   ├── native-components.md
@@ -102,129 +154,89 @@ skills/ios-native-design/
 │   ├── typography-color.md
 │   ├── motion-materials.md
 │   ├── accessibility.md
+│   ├── agent-device-testing.md
+│   ├── device-hub.md
+│   ├── computer-use-testing.md
 │   ├── testing.md
 │   └── visual-review.md
 ├── templates/
 │   ├── DesignTokens.swift
+│   ├── AGENT_UI_TEST_PROMPT.md
+│   ├── DEVICE_TEST_MATRIX.md
 │   └── SCREENSHOT_REVIEW_PROMPT.md
+├── tests/
+│   └── test_skill_contract.py
 └── verifier/
     ├── ios_design_verifier.py
     ├── verifier.config.json
     └── README.md
 ```
 
-## Verifier
+## Design rules are still layered
 
-The included verifier intentionally checks only source-level signals that are reasonable to automate.
+| Rule class | Evidence |
+|---|---|
+| **STATIC** | source code |
+| **RENDER** | device-resolution screenshots |
+| **INTERACTION** | running behavior + semantics/accessibility |
+| **JUDGMENT** | product/design reasoning across runtime evidence |
+
+The static verifier remains deliberately narrow. It catches raw colors, fixed font sizes, magic spacing/radii, likely native-control recreation, and similar drift.
 
 ```bash
 python3 skills/ios-native-design/verifier/ios_design_verifier.py /path/to/ios-project
 ```
 
-Example failures:
-
-```swift
-Text("Hello")
-    .font(.system(size: 15))
-    .padding(17)
-    .foregroundStyle(Color(hex: "#121212"))
-```
-
-Typical findings:
-
-```text
-IOS-NATIVE-001  raw RGB / HEX color
-IOS-NATIVE-002  fixed system font size
-IOS-NATIVE-003  raw numeric padding
-```
-
-A legitimate exception must explain itself:
-
-```swift
-// ios-native-design: allow IOS-NATIVE-002 reason=Approved brand hero display type
-Text(title)
-    .font(.system(size: 54, weight: .bold))
-```
-
-## Screenshot review loop
-
-Source code cannot tell you whether a screen actually has strong hierarchy or feels visually coherent.
-
-For substantial UI work, the Skill requires this loop:
-
-```text
-Implement → Render → Screenshot → Review → Fix → Render again
-```
-
-The review prompt explicitly checks for:
-
-- hierarchy and primary focus
-- platform familiarity
-- spacing and alignment
-- typography consistency
-- accent-color restraint
-- SF Symbols / icon consistency
-- nested-card overload
-- Liquid Glass misuse
-- long-content and localization risk
-- accessibility risks visible in the render
-
-No fake “design score” is produced. Findings are classified as **Blocker / Major / Minor**.
-
-## Design Definition of Done
-
-A material UI change is not finished at `BUILD SUCCEEDED`.
-
-The included DoD covers:
-
-- platform fit
-- visual hierarchy
-- layout and spacing
-- typography
-- color and materials
-- interaction states
-- motion and Reduce Motion
-- accessibility and VoiceOver
-- loading / empty / error / long-content states
-- preview, screenshot, XCUI, and snapshot verification
-
-See [`DESIGN_DOD.md`](./skills/ios-native-design/DESIGN_DOD.md).
+But it is **P2**, not the core proof of design quality.
 
 ## Use it with an agent
 
-After installation, ask your coding agent to apply the Skill to new UI or an existing screen, for example:
+After installation:
 
 ```text
-Use ios-native-design to audit this SwiftUI screen.
-Render it first, then report Blocker / Major / Minor findings and fix the highest-leverage issues.
+Use ios-native-design to implement and verify this SwiftUI flow.
+
+After coding:
+1. build and launch the app;
+2. operate the affected flow yourself;
+3. use Device Hub / simulator tools to tap, swipe, scroll, and type;
+4. capture device-resolution screenshots at major checkpoints;
+5. inspect accessibility semantics when available;
+6. run the applicable device/environment matrix;
+7. fix Blocker and Major findings and rerun;
+8. encode the stable critical path as XCUI regression.
 ```
 
-Or during implementation:
+For a review-only pass:
 
 ```text
-Implement this screen using ios-native-design.
-Prefer native SwiftUI components, use semantic tokens, create the required preview states,
-and do not call the UI complete until the rendered screenshot has been reviewed.
+Use ios-native-design to audit this running iOS flow.
+Do not review source only. Exercise the app, collect runtime evidence,
+then report Runtime coverage / Blocker / Major / Minor / Regression.
 ```
 
 ## Design philosophy
 
 1. **Apple-native, not Apple-looking.** Platform behavior matters more than decorative resemblance.
-2. **Native component first.** Custom controls need a product reason.
-3. **Semantic over arbitrary.** Prefer Dynamic Type, system colors, SF Symbols, and meaningful tokens.
-4. **Accessibility is design quality.** It is part of the default pass, not a release checklist afterthought.
-5. **Render before judging.** Source inspection is not visual review.
-6. **Automate what is objective.** Leave hierarchy, craft, and brand judgment to rendered review.
-7. **Exceptions need evidence.** Deviating from the default path should be explicit and reviewable.
+2. **Runtime truth beats source confidence.** Operate the app before declaring UI work complete.
+3. **Native component first.** Custom controls need a product reason.
+4. **Semantic over arbitrary.** Prefer Dynamic Type, system colors, SF Symbols, and meaningful tokens.
+5. **Accessibility is design quality.** Screenshot + accessibility semantics are stronger together.
+6. **Explore with agents, regress with tests.** Unknown problems deserve exploration; known paths deserve XCUI.
+7. **Automate what is objective.** Static checks are guardrails, not aesthetic judges.
+8. **Physical device when hardware matters.** Simulator success is not proof of device-only behavior.
 
 ## Primary references
 
 - [Apple Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
 - [Apple Design Resources](https://developer.apple.com/design/resources/)
-- [Apple SF Symbols](https://developer.apple.com/sf-symbols/)
-- [SwiftUI](https://developer.apple.com/xcode/swiftui/)
+- [Apple Device Hub](https://developer.apple.com/documentation/xcode/device-hub/)
+- [Capture screenshots and videos](https://developer.apple.com/documentation/xcode/capturing-screenshots-and-videos-from-devices)
+- [WWDC26 — Get the most out of Device Hub](https://developer.apple.com/videos/play/wwdc2026/260/)
+- [WWDC26 — Platforms State of the Union](https://developer.apple.com/videos/play/wwdc2026/102/)
+- [ZCode iOS simulator plugin](https://www.zcode.network/en/docs/plugin/)
 - [skills CLI](https://www.skills.sh/docs/cli)
 
 ---
 
-<p align="center"><sub>Built as design engineering infrastructure for AI-assisted iOS development.</sub></p>
+<p align="center"><sub>Design engineering infrastructure for agent-operated iOS development.</sub></p>
