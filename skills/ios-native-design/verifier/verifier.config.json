@@ -1,0 +1,23 @@
+{
+  "exclude_paths": [
+    ".build",
+    "DerivedData",
+    "Pods",
+    "Carthage",
+    "Packages",
+    "Tests",
+    "UITests"
+  ],
+  "token_owner_name_fragments": [
+    "DesignToken",
+    "DesignSystem",
+    "Theme",
+    "AppColor",
+    "AppTypography",
+    "AppSpacing"
+  ],
+  "fail_rules": [
+    "IOS-NATIVE-001",
+    "IOS-NATIVE-002"
+  ]
+}
