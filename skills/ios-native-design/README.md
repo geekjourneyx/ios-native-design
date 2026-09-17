@@ -1,6 +1,20 @@
 # ios-native-design
 
-A reusable iOS Design Harness for SwiftUI coding agents.
+A reusable **iOS Design + Runtime QA Harness** for AI coding agents.
+
+The Skill combines:
+
+- Apple HIG
+- native-component-first SwiftUI
+- semantic design tokens
+- accessibility
+- agent-operated runtime exploration
+- Xcode 27 Device Hub
+- Computer Use fallback
+- full-resolution screenshot review
+- environment/device test matrices
+- Explore → XCUI regression
+- static design guardrails
 
 ## Install
 
@@ -8,49 +22,27 @@ A reusable iOS Design Harness for SwiftUI coding agents.
 npx skills add geekjourneyx/ios-native-design
 ```
 
-Explicit skill selection:
-
-```bash
-npx skills add geekjourneyx/ios-native-design --skill ios-native-design
-```
-
-Global install:
-
-```bash
-npx skills add geekjourneyx/ios-native-design -g
-```
-
-## What it enforces
-
-- Apple HIG as the primary platform reference
-- native SwiftUI components before custom recreations
-- Dynamic Type and semantic system colors
-- project-owned spacing / radius / brand tokens
-- 44×44 pt interaction targets
-- deliberate motion and Reduce Motion behavior
-- restrained Liquid Glass usage
-- screenshot-driven visual review
-- accessibility, XCUI, and snapshot verification
-- a final Design Definition of Done
-
-## Workflow
+## Main workflow
 
 ```text
-Requirement
-  ↓
-HIG + native component decision
-  ↓
-Design tokens
-  ↓
-SwiftUI
-  ↓
-Render / screenshot
-  ↓
-Visual + accessibility review
-  ↓
-Static verifier + UI tests
-  ↓
-Design DoD
+Design → Implement → Build → Operate app → Collect runtime evidence
+                                      ↓
+                          Screenshot + accessibility
+                                      ↓
+                              Review → Fix → Rerun
+                                      ↓
+                            Stable path → XCUI
 ```
 
-See the repository root README for the full overview.
+## Start here
+
+- `SKILL.md` — required workflow and hard constraints
+- `references/agent-device-testing.md` — P0 runtime loop
+- `references/device-hub.md` — Xcode 27 Device Hub usage
+- `references/computer-use-testing.md` — semantic-tool vs GUI automation boundary
+- `templates/AGENT_UI_TEST_PROMPT.md` — ready-to-use runtime QA prompt
+- `templates/DEVICE_TEST_MATRIX.md` — environment coverage
+- `DESIGN_DOD.md` — final release gate
+- `VERIFIER_RULES.md` — static/render/interaction/judgment rule taxonomy
+
+The static verifier is intentionally a guardrail, not the definition of design quality.
