@@ -57,7 +57,7 @@ Use Device Hub's device-resolution Screenshot control for final visual evidence 
 
 Agent exploration is useful for discovering broken flows and reliable interaction paths.
 
-Once a critical path is stable, encode it as XCUI so ordinary CI does not require an LLM to rediscover it.
+Once a critical path is stable, encode it as XCUI so ordinary CI does not require an LLM to rediscover it. **Stable critical paths belong in deterministic regression.**
 
 Automate business-critical:
 
