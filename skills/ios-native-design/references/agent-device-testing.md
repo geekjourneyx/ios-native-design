@@ -8,7 +8,7 @@ Source inspection can catch implementation mistakes. Previews can expose static 
 
 The highest-value verifier is the running app.
 
-Xcode 27 agents can interact with a running app — tapping, swiping, scrolling, typing — and can receive screenshots and accessibility information. Use that capability for exploratory verification, then encode stable critical paths as deterministic tests.
+Xcode 27 agents can interact with a running app — tapping, swiping, scrolling, typing — and can receive screenshots plus accessibility tree / semantic information. Use that capability for exploratory verification, then encode stable critical paths as deterministic tests.
 
 ## Capability routing
 
@@ -33,7 +33,7 @@ launch
   ↓
 exercise primary flow
   ↓
-inspect semantics + screenshots
+inspect accessibility tree/semantics + screenshots
   ↓
 change environment
   ↓
@@ -77,7 +77,7 @@ At each meaningful screen capture:
 - current task/step
 - expected state
 - observed state
-- accessibility role/label/value for critical elements
+- accessibility tree role/label/value for critical elements when available
 - full-resolution screenshot
 - issue severity if something is wrong
 
