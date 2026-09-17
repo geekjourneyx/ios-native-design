@@ -1,31 +1,43 @@
 ---
 name: ios-native-design
-description: Use when designing, implementing, refactoring, or reviewing an iPhone or iPad app whose SwiftUI interface needs to feel Apple-native, consistent, accessible, visually polished, or compliant with Apple Human Interface Guidelines.
+description: Use when designing, implementing, refactoring, testing, or reviewing an iPhone or iPad app whose SwiftUI interface needs to feel Apple-native, consistent, accessible, visually polished, or compliant with Apple Human Interface Guidelines.
 ---
 
 # iOS Native Design
 
 ## Core principle
 
-Build **with the platform, not on top of it**.
+Build **with the platform, then verify in the running app**.
 
 Prefer familiar Apple interaction models and system components. Put product identity primarily into content, illustration, data visualization, copy, selective color, and a few deliberate moments — not into reimplementing navigation or basic controls.
 
-A UI task is not complete when it compiles. It is complete only after the rendered result has been inspected.
+A UI task is not complete when it compiles, previews, or produces a screenshot. It is complete only after an agent or human has operated the rendered app and reviewed runtime evidence.
 
 ## Source of truth
 
 In order of authority:
 
 1. Current Apple Human Interface Guidelines and Apple Developer documentation.
-2. Current SwiftUI APIs for the project's actual deployment target.
+2. Current SwiftUI and Xcode behavior for the project's actual deployment target.
 3. The project's approved design tokens and component rules.
 4. Existing approved screens in the same product.
 5. External inspiration.
 
-When an API, platform behavior, or HIG recommendation may have changed, verify the current Apple documentation before implementing.
+When an API, Device Hub capability, platform behavior, or HIG recommendation may have changed, verify current Apple documentation before implementing.
 
 Read `references/apple-hig-baseline.md` first for new products or large redesigns.
+
+## Verification priority
+
+Use the highest-fidelity verification available:
+
+1. **P0 — Agent-operated runtime verification**: launch the real app, drive its primary flows, inspect screenshots and accessibility semantics, vary environment settings, fix, and repeat.
+2. **P0 — Runtime visual/accessibility evidence**: use Device Hub full-resolution screenshots and accessibility tree/semantics where available.
+3. **P1 — Deterministic regression**: convert stable critical flows into XCUI tests; use physical-device smoke tests when hardware matters.
+4. **P1 — Preview matrix**: use previews for fast state coverage and component iteration.
+5. **P2 — Static verifier and snapshot tests**: prevent drift, but never treat them as proof of visual quality.
+
+If runtime interaction is unavailable, fall back progressively to simulator/CLI/preview evidence and state the limitation.
 
 ## Required workflow
 
@@ -63,15 +75,7 @@ Read `references/design-tokens.md`, `references/layout-spacing.md`, and `referen
 
 Feature views must not invent a parallel design system.
 
-Use semantic tokens for:
-
-- spacing
-- content widths
-- radii where custom radii are genuinely needed
-- brand colors
-- semantic status colors
-- custom motion values
-- custom typography roles
+Use semantic tokens for spacing, content widths, custom radii, brand colors, semantic status colors, custom motion values, and justified custom typography roles.
 
 System semantic colors and Dynamic Type styles remain preferable to custom equivalents.
 
@@ -79,13 +83,7 @@ System semantic colors and Dynamic Type styles remain preferable to custom equiv
 
 Read `references/motion-materials.md`.
 
-Motion must communicate one of:
-
-- state
-- feedback
-- continuity
-- spatial relationship
-- progress
+Motion must communicate state, feedback, continuity, spatial relationship, progress, or direct manipulation.
 
 Do not add motion solely to make the UI look "premium".
 
@@ -106,36 +104,118 @@ At minimum verify:
 - logical focus and reading order
 - usable layout at accessibility text sizes
 
-### 6. Render before judging
+### 6. Build and operate the running app — P0
 
-Every material UI change must be rendered in a preview, simulator, or device.
+Read `references/agent-device-testing.md`, `references/device-hub.md`, and `references/computer-use-testing.md`.
 
-Do not claim visual completion from source inspection alone.
+After a material UI change:
 
-For substantial changes:
+1. build and launch the app
+2. choose the best available runtime driver:
+   - Xcode agent simulator/device tools
+   - a semantic iOS simulator tool such as ZCode `ios-simulator`
+   - Computer Use driving Xcode + Device Hub
+   - manual Device Hub interaction as fallback
+3. execute the primary user flow with realistic tap / swipe / scroll / type interactions
+4. inspect accessibility semantics/tree where available
+5. capture Device Hub full-resolution screenshots at major checkpoints
+6. vary the applicable environment: Light/Dark, Dynamic Type, contrast, screen size, orientation, Reduce Motion, locale/content states
+7. review runtime behavior and screenshots
+8. fix Blocker and Major findings
+9. rerun the affected flow
 
-1. capture the target screen
-2. run `templates/SCREENSHOT_REVIEW_PROMPT.md`
-3. fix blocker and major findings
-4. render again
+Use `templates/AGENT_UI_TEST_PROMPT.md` and `templates/DEVICE_TEST_MATRIX.md`.
 
-Read `references/visual-review.md`.
+Do not declare design completion from source inspection, build success, preview success, or a single static screenshot.
 
-### 7. Test and verify
+### 7. Explore, then codify
+
+Agent exploration is for discovery; regression tests are for repetition.
+
+For new or changed flows:
+
+```text
+agent explores runtime
+        ↓
+finds reliable interaction path
+        ↓
+fixes product/design issues
+        ↓
+stable critical path
+        ↓
+encode as XCUI / deterministic regression
+```
+
+Do not require an LLM to rediscover the same stable path on every CI run.
+
+### 8. Fast preview pass
 
 Read `references/testing.md`.
 
+Use previews for rapid state coverage:
+
+- Light / Dark
+- default / accessibility text
+- empty / populated / long
+- loading / error
+- small / large layouts
+
+Preview is a fast feedback tool, not runtime truth.
+
+### 9. Static and snapshot guardrails
+
 Run, as applicable:
 
-- build
-- preview matrix
 - static design verifier
-- accessibility inspection
-- critical XCUI flows
 - snapshot regression
-- screenshot review
+- shared-component call-site review
+
+These guard against drift. They do not prove that the running app feels correct.
 
 Finish with `DESIGN_DOD.md`.
+
+## Capability routing
+
+Prefer semantic tools over coordinate clicking when they provide equivalent control.
+
+```text
+Xcode native agent device/simulator tools available?
+  → use them
+
+Else semantic iOS simulator automation available?
+  → use it
+
+Else Computer Use available?
+  → drive Xcode + Device Hub
+
+Else
+  → CLI + previews + manual screenshots
+```
+
+Use CLI/API for deterministic operations such as build, install, launch, device discovery, and repeatable test execution when available. Use Computer Use for visual exploration, system UI, and interactions that do not have a better semantic interface.
+
+## Runtime evidence bundle
+
+For a substantial UI change, preserve enough evidence to explain what was actually verified:
+
+- flow or scenario tested
+- device / simulator and OS
+- runtime environment variants
+- full-resolution screenshots for major checkpoints
+- accessibility findings/tree observations where available
+- Blocker / Major / Minor findings
+- fixes made
+- deterministic regression added or reason it was not added
+
+The strongest review context combines:
+
+```text
+source code
++ interaction history
++ screenshot
++ accessibility semantics
++ environment state
+```
 
 ## Hard constraints
 
@@ -154,8 +234,10 @@ Unless the product requirement explicitly justifies an exception:
 11. Liquid Glass belongs primarily to controls/navigation, not ordinary content surfaces.
 12. Motion must remain understandable with Reduce Motion enabled.
 13. Loading, empty, error, long-content, and populated states must be intentionally designed where applicable.
-14. A UI change is incomplete until the rendered output is visually reviewed.
+14. A material UI change is incomplete until the running app has been operated and runtime evidence reviewed.
 15. Accessibility is part of design quality, not a post-release task.
+16. A screenshot captured from the Mac desktop is navigation evidence; prefer Device Hub's device-resolution capture for final visual evidence when available.
+17. Hardware-dependent features require physical-device verification before calling that behavior complete.
 
 ## Exception protocol
 
@@ -175,15 +257,21 @@ For static verifier exceptions:
 
 Never use an exception merely to silence a warning.
 
-## Agent output format for design reviews
+## Agent output format for runtime/design reviews
 
-Report findings in this order:
+Report:
+
+### Runtime coverage
+- device / simulator
+- flow exercised
+- environment variants
+- evidence captured
 
 ### Blockers
-Violations likely to create broken interaction, serious accessibility issues, or strongly non-native behavior.
+Broken interaction, serious accessibility issues, content obscured, or strongly incorrect platform behavior.
 
 ### Major
-Problems that materially reduce consistency, hierarchy, readability, or platform fit.
+Problems that materially reduce consistency, hierarchy, readability, platform fit, or task completion.
 
 ### Minor
 Polish issues that are worth correcting but do not block the screen.
@@ -191,9 +279,12 @@ Polish issues that are worth correcting but do not block the screen.
 For each finding include:
 
 - rule / principle
-- evidence
+- runtime evidence
 - affected screen or file
 - smallest recommended change
+
+### Regression
+State which stable critical paths were encoded as deterministic tests.
 
 Do not provide a fake numerical "design score".
 
@@ -201,13 +292,16 @@ Do not provide a fake numerical "design score".
 
 | Task | Read |
 |---|---|
-| New app / redesign | `apple-hig-baseline.md`, then all relevant refs |
+| New app / redesign | `apple-hig-baseline.md`, then relevant refs |
 | Navigation / controls | `native-components.md` |
 | Spacing / layout | `layout-spacing.md`, `design-tokens.md` |
 | Typography / color | `typography-color.md` |
 | Animation / glass | `motion-materials.md` |
 | Accessibility | `accessibility.md` |
-| Previews / tests | `testing.md` |
+| Agent runtime verification | `agent-device-testing.md` |
+| Xcode 27 Device Hub | `device-hub.md` |
+| Computer Use fallback | `computer-use-testing.md` |
+| Preview / XCUI / snapshots | `testing.md` |
 | Screenshot critique | `visual-review.md` |
 | Final gate | `DESIGN_DOD.md`, `VERIFIER_RULES.md` |
 
@@ -228,6 +322,9 @@ Reject these defaults:
 - decorative animation on every state change
 - hiding core actions to make the screen look "minimal"
 - source-only UI review without rendering
+- screenshot-only review without exercising the flow
+- using Computer Use coordinate clicking when a reliable semantic tool exists
+- repeatedly asking an LLM to execute a stable flow that should be an XCUI test
 
 ## Completion
 
