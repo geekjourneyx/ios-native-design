@@ -1,5 +1,7 @@
 # iOS Native Design — Verifier Rules
 
+The verifier is a **P2 guardrail**. Runtime evidence is the primary proof of UI quality.
+
 This document separates rules by what can actually verify them.
 
 ## Rule classes
@@ -8,13 +10,23 @@ This document separates rules by what can actually verify them.
 Can be checked from source with reasonable confidence.
 
 ### RENDER
-Needs a rendered preview/simulator/device screenshot.
+Needs a rendered simulator/device screenshot. Prefer Device Hub full-resolution captures.
 
 ### INTERACTION
-Needs simulator/device interaction, accessibility tree, or UI tests.
+Needs the running app, device/simulator interaction, accessibility semantics/tree, or UI tests.
 
 ### JUDGMENT
-Needs product/design reasoning. Never pretend a regex can verify it.
+Needs product/design reasoning across runtime evidence. Never pretend a regex can verify it.
+
+## Priority
+
+```text
+P0  INTERACTION + high-fidelity RENDER
+P1  deterministic UI regression
+P2  STATIC + snapshot drift detection
+```
+
+A clean static verifier result does not imply design completion.
 
 ---
 
@@ -35,20 +47,13 @@ Needs product/design reasoning. Never pretend a regex can verify it.
 
 ### Static exceptions
 
-Use a local, explicit waiver:
-
 ```swift
 // ios-native-design: allow IOS-NATIVE-002 reason=Approved brand hero display type
 Text(title)
     .font(.system(size: 54, weight: .bold))
 ```
 
-Rules for waivers:
-
-- one line above the relevant code where practical
-- rule ID required
-- meaningful `reason=` required
-- no global blanket waivers without design-system ownership
+Waivers require a rule ID and meaningful `reason=`.
 
 ---
 
@@ -69,7 +74,7 @@ Rules for waivers:
 | IOS-RENDER-011 | minor | Empty state has appropriate emphasis without oversized decorative UI. |
 | IOS-RENDER-012 | minor | Screen density is appropriate for the task and avoids unnecessary chrome. |
 
-Run these with `templates/SCREENSHOT_REVIEW_PROMPT.md`.
+Use runtime screenshots. Prefer Device Hub captures for final evidence.
 
 ---
 
@@ -78,20 +83,21 @@ Run these with `templates/SCREENSHOT_REVIEW_PROMPT.md`.
 | ID | Severity | Verify |
 |---|---|---|
 | IOS-INT-001 | blocker | Effective interactive hit region is at least 44×44 pt on iOS/iPadOS. |
-| IOS-INT-002 | blocker | VoiceOver exposes understandable names for actionable elements. |
+| IOS-INT-002 | blocker | VoiceOver/accessibility semantics expose understandable names for actionable elements. |
 | IOS-INT-003 | blocker | Destructive actions have appropriate confirmation or recovery. |
 | IOS-INT-004 | major | Reading/focus order follows visual order. |
 | IOS-INT-005 | major | Reduce Motion removes/reduces problematic zoom, scale, repeated bounce, depth movement, or large spatial transitions. |
-| IOS-INT-006 | major | Standard navigation gestures and dismissal behavior still work. |
+| IOS-INT-006 | major | Standard navigation gestures and dismissal behavior work in the running app. |
 | IOS-INT-007 | major | Loading / disabled controls cannot accidentally trigger duplicate work. |
 | IOS-INT-008 | major | Information conveyed by color has another cue. |
-| IOS-INT-009 | minor | Haptics and sound reinforce meaningful events and are not noisy. |
+| IOS-INT-009 | major | Primary user flow completes through real tap/swipe/scroll/type interaction. |
+| IOS-INT-010 | minor | Haptics and sound reinforce meaningful events and are not noisy. |
 
 ---
 
 ## Judgment rules
 
-These require design review, not automatic pass/fail:
+These require design review across runtime behavior and visual evidence:
 
 ### IOS-JUDGE-001 — Familiarity
 Would an experienced iPhone user know how to navigate and act without instruction?
@@ -113,41 +119,39 @@ Is delight the result of useful, coherent behavior and thoughtful moments rather
 
 ---
 
-## Preview / screenshot test matrix
+## Environment matrix
 
-Required for major screens:
+For major screens use the applicable rows from `templates/DEVICE_TEST_MATRIX.md`.
+
+At minimum consider:
 
 | Dimension | Minimum |
 |---|---|
 | Appearance | Light, Dark |
 | Text size | Default, one accessibility size |
-| Content | Empty, normal, long |
-| State | Loading, success, error where applicable |
-| Device | Small iPhone, current large iPhone |
-| Locale | Primary locale + one expansion-prone locale for text-heavy screens |
+| Content | Empty/normal/long as applicable |
+| State | Loading/success/error as applicable |
+| Device | Small + large/resized iPhone |
 | Motion | Reduce Motion for motion-heavy screens |
-| Contrast | Increased Contrast where custom styling is substantial |
-
-Add iPad, landscape, RTL, keyboard, or permission states when the product supports them.
+| Contrast | Increased Contrast where styling is substantial |
+| Input | Keyboard-present for input screens |
+| Hardware | Physical device when behavior is hardware-dependent |
 
 ---
 
 ## CI policy
 
-Recommended:
-
 ```text
 Static FAIL rule → block PR
 Static WARN rule → annotate PR
-Screenshot blocker → block PR
-Screenshot major → must fix or document approved exception
+Runtime/screenshot Blocker → block PR
+Runtime/screenshot Major → fix or document approved exception
 Accessibility blocker → block PR
+XCUI critical-path failure → block PR
 Snapshot diff → require review, not automatic acceptance
 ```
 
 Never auto-approve a snapshot merely because the new screenshot is different.
-
----
 
 ## Verifier output schema
 
